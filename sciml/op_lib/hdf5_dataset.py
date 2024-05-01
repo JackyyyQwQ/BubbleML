@@ -5,6 +5,8 @@ import random
 from torchvision.transforms import Resize
 import torchvision.transforms.functional as TF
 from pathlib import Path
+#for nucleation 
+from .nucleation import heater_init, dfun_init
 
 # The early timesteps of a simulation may be "unsteady"
 # We say that the simulation enters a steady state around
@@ -321,3 +323,91 @@ class VelCoordInputDataset(HDF5Dataset):
         base_time = timestep + self.time_window
         self._data['velx'][base_time:base_time + self.future_window] = vel[0::2]
         self._data['vely'][base_time:base_time + self.future_window] = vel[1::2]
+
+class VelDfunDataset(HDF5Dataset):
+    r""" 
+    This is a dataset for predicting dfun and velocity. It assumes that
+    dfun are known at t, vel at t is also known. It also enables writing
+    past predictions for velocities and dfun and using them to make future
+    predictions. Nucleation layer is added as input
+    """
+    def __init__(self,
+                 filename,
+                 steady_time,
+                 use_coords,
+                 transform=False,
+                 time_window=1,
+                 future_window=1,
+                 push_forward_steps=1):
+        super().__init__(filename, steady_time, transform, time_window, future_window, push_forward_steps)
+        self.filename = filename
+        coords_dim = 2 if use_coords else 0
+        self.in_channels = 3 * self.time_window + 1 #2 for current velocity 1 for current dfun 1 for nucleation layer
+        self.out_channels =3 * self.future_window #for two future velocity vx and vy and one for future dfun
+
+    #added function to get num sites based on different files 
+    def get_num_sites(self, filename):
+        r"""
+        Extracts the Twall value from the filename and maps it to the corresponding
+        number of nucleation sites.
+        """
+        filename = Path(filename).stem
+        TWALL_PREFIX = 'Twall-'
+        # Define a mapping from Twall value to the number of nucleation sites.
+        twall_to_num_sites_map = {
+            '90': 15, '92': 17, '95': 19, '97': 21, '98': 22,
+            '100': 24, '102': 25, '106': 27, '108': 27, '110': 27
+        }
+        # Extract Twall value and convert it to an integer.
+        twall_value = filename.split(TWALL_PREFIX)[-1]
+        # Return the number of nucleation sites from the map.
+        return twall_to_num_sites_map.get(twall_value, 0) 
+        
+    def __getitem__(self, timestep):
+        # past velocity
+        vel = torch.cat([self._get_vel_stack(timestep + k) for k in range(self.time_window)], dim=0).unsqueeze(0)
+        base_time = timestep + self.time_window 
+        vel_label = torch.cat([self._get_vel_stack(base_time + k) for k in range(self.future_window)], dim=0).unsqueeze(0)
+        # past dfun
+        dfun = torch.stack([self._get_dfun(timestep + k) for k in range(self.time_window)], dim=0).unsqueeze(0)
+        dfun_label = torch.stack([self._get_dfun(base_time + k) for k in range(self.future_window)], dim=0).unsqueeze(0)
+        
+        #for nucleation layer 
+        #get the num_sites
+        num_sites = self.get_num_sites(self.filename)
+        # Get the coordinates of grids
+        coordx, coordy = self._data['x'][0], self._data['y'][0]
+        # Initialize nucleation sites
+        init_nucl_coordx, init_nucl_coordy = heater_init(-5.0, 5.0, num_sites)
+        # Initialize the layer
+        nucleation_layer = dfun_init(coordx, coordy, init_nucl_coordx, init_nucl_coordy, seed_radius=0.1)
+        nucleation_layer[nucleation_layer>=0] = 1
+        nucleation_layer[nucleation_layer<0] = 0
+        nucleation_layer = torch.tensor(nucleation_layer).unsqueeze(0).unsqueeze(0)
+        #return self._transform(coords, vel, dfun, nucleation_layer, vel_label, dfun_label)
+        # Apply transformations to elements that require it
+        transformed_vel, transformed_dfun, transformed_layer, transformed_vel_label, transformed_dfun_label = self._transform(vel, dfun, nucleation_layer, vel_label, dfun_label)
+    
+        # Return all elements, combining transformed ones with the untransformed nucleation_layer
+        return  transformed_vel, transformed_dfun, transformed_layer, transformed_vel_label, transformed_dfun_label
+    
+    def write_vel(self, vel, timestep):
+        base_time = timestep + self.time_window
+        self._data['velx'][base_time:base_time + self.future_window] = vel[0::2]
+        self._data['vely'][base_time:base_time + self.future_window] = vel[1::2]
+
+    def write_dfun(self, dfun, timestep):
+        if dfun.dim() == 2:
+            dfun.unsqueeze_(-1)
+        base_time = timestep + self.time_window
+        self._data['dfun'][base_time:base_time + self.future_window] = dfun
+
+# if __name__ == '__main__':
+#     test_ds = VelDfunDataset('/share/crsp/lab/ai4ts/share/simul_ts_0.1/PoolBoiling-SubCooled-FC72-2D-0.1/Twall-103.hdf5', steady_time=300, use_coords=True, transform=False, time_window=5, future_window=5)
+#     vel, dfun, nucl, vel_label, dfun_label = test_ds[0]
+#     print(vel.shape)
+#     print(dfun.shape)
+#     print(nucl.shape)
+#     print(vel_label.shape)
+#     print(dfun_label.shape)
+    

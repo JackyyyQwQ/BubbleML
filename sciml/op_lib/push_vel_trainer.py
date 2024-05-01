@@ -168,8 +168,6 @@ class PushVelTrainer:
             idx = (push_forward_steps - 1)
             vel_label = vel_label[:, idx].to(local_rank()).float()
 
-            temp_label, vel_label = downsample_domain(self.cfg.train.downsample_factor, temp_label, vel_label)
-
             temp_loss = F.mse_loss(temp_pred, temp_label)
             vel_loss = F.mse_loss(vel_pred, vel_label)
             loss = (temp_loss + vel_loss) / 2
@@ -207,7 +205,7 @@ class PushVelTrainer:
             write_metrics(vel_pred, vel_label, global_iter, 'ValVel', self.writer)
             del temp, vel, temp_label, vel_label
 
-    def test(self, dataset, max_time_limit=200):
+    def test(self, dataset, max_time_limit=100): #200
         self.model.eval()
         temps = []
         temps_labels = []

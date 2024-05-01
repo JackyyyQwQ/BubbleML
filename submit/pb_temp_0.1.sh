@@ -2,7 +2,7 @@
 #SBATCH -A amowli_lab_gpu
 #SBATCH -p gpu
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:A30:1
+#SBATCH --gres=gpu:A30:4
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=20
 #SBATCH --mem-per-cpu=5G
@@ -14,9 +14,9 @@
 HOST_NODE_ADDR=$(scontrol show hostnames | head -n 1)
 NNODES=$(scontrol show hostnames | wc -l)
 
-module load anaconda/2022.05
-. ~/.mycondaconf
-conda activate bubble-sciml
+#module load anaconda/2022.05
+#. ~/.mycondaconf
+#conda activate bubble-sciml
 
 DATASET=PB_SubCooled_0.1
 #DATASET=FB_Gravity_0.1
@@ -30,9 +30,9 @@ DATASET=PB_SubCooled_0.1
 #MODEL=fno
 #MODEL=uno
 #MODEL=ffno
-MODEL=gfno
+#MODEL=gfno
 #MODEL=unet_bench
-#MODEL=unet_arena
+MODEL=unet_arena
 #MODEL=ufnet
 
 srun torchrun \
@@ -46,7 +46,6 @@ srun torchrun \
     --tee 3 \
     sciml/train.py \
 		data_base_dir=/share/crsp/lab/ai4ts/share/simul_ts_0.1/ \
-		log_dir=/pub/afeeney/train_log_dir \
+		log_dir=/pub/junchc2/BubbleML \
 		dataset=$DATASET \
-		experiment=gfno_test/cosine \
-		experiment.train.max_epochs=1
+		experiment=paper/test/pb_dfun

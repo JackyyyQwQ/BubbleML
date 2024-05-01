@@ -21,14 +21,16 @@ from op_lib.disk_hdf5_dataset import (
         DiskTempInputDataset,
         DiskTempVelDataset,
         DiskVelInputDataset,
-        DiskVelCoordInputDataset
+        DiskVelCoordInputDataset,
+        DiskVelDfunDataset
 )
 from op_lib.hdf5_dataset import (
         HDF5ConcatDataset,
         TempInputDataset,
         TempVelDataset,
         VelInputDataset,
-        VelCoordInputDataset
+        VelCoordInputDataset,
+        VelDfunDataset
 )
 
 from op_lib.temp_trainer import TempTrainer
@@ -36,6 +38,7 @@ from op_lib.vel_trainer import VelTrainer
 from op_lib.push_vel_trainer import PushVelTrainer
 from op_lib.vel_only_trainer import VelOnlyTrainer
 from op_lib.vel_coord_trainer import VelCoordTrainer
+from op_lib.vel_dfun_trainer import VelDfunTrainer
 from op_lib.schedule_utils import LinearWarmupLR
 from op_lib import dist_utils
 
@@ -46,14 +49,16 @@ torch_dataset_map = {
     'temp_input_dataset': (DiskTempInputDataset, TempInputDataset),
     'vel_dataset': (DiskTempVelDataset, TempVelDataset),
     'vel_only_dataset' : (DiskVelInputDataset,VelInputDataset),
-    'vel_coord_dataset' : (DiskVelCoordInputDataset,VelCoordInputDataset)
+    'vel_coord_dataset' : (DiskVelCoordInputDataset,VelCoordInputDataset),
+    'vel_dfun_dataset' : (DiskVelDfunDataset,VelDfunDataset)
 }
 
 trainer_map = {
     'temp_input_dataset': TempTrainer,
     'vel_dataset': PushVelTrainer, 
     'vel_only_dataset': VelOnlyTrainer,
-    'vel_coord_dataset' : VelCoordTrainer
+    'vel_coord_dataset' : VelCoordTrainer,
+    'vel_dfun_dataset' : VelDfunTrainer
 }
 
 def build_datasets(cfg):

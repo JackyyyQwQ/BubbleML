@@ -3,8 +3,8 @@ torch_dataset_name: vel_coord_dataset
 distributed: False
 
 train:
-  max_epochs: 25
-  batch_size: 4
+  max_epochs: 15
+  batch_size: 8
   shuffle_data: True
   time_window: 5
   future_window: 5

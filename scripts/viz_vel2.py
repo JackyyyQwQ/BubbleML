@@ -32,13 +32,13 @@ def load_vel_data(vel_path):
 def main():
     args = parse_args()
     
-    job_id = '29645456/'
+    job_id = '31249692'
     pred, label = load_vel_data(f'test_im/vel/{job_id}')
     
     plt_vel(pred, label, args.path, 'model')
 
     subprocess.call(
-            f'ffmpeg -y -framerate 25 -pattern_type glob -i "{args.path}/*.png" vel.mp4',
+            f'ffmpeg -y -framerate 25 -pattern_type glob -i "{args.path}/*.png" veltest.mp4',
             shell=True)
 
 def temp_cmap():
@@ -72,7 +72,7 @@ def plt_vel(pred, label, path, model_name):
     frames = min(pred.velx.shape[0], 100)
     for i in range(frames):
         i_str = str(i).zfill(3)
-        f, ax = plt.subplots(2, 2, layout='constrained')
+        f, ax = plt.subplots(1, 2, layout='constrained')
         
         x_vmax, x_vmin = label.velx.max(), label.velx.min()
         y_vmax, y_vmin = label.vely.max(), label.vely.min()
@@ -80,17 +80,18 @@ def plt_vel(pred, label, path, model_name):
         #cm_object = ax[0, 0].imshow(np.flipud(label.temp[i]), vmin=0, vmax=1, cmap=temp_cmap())
         #ax[1, 0].imshow(np.flipud(label.velx[i]), vmin=x_vmin, vmax=x_vmax, cmap='jet')
         #ax[2, 0].imshow(np.flipud(label.vely[i]), vmin=y_vmin, vmax=y_vmax, cmap='jet')
-        ax[1, 0].imshow(np.flipud(label_mag[i]), vmin=0, vmax=mag_vmax, cmap='jet')
+        ax[0].imshow(np.flipud(label_mag[i]), vmin=0, vmax=mag_vmax, cmap='jet')
 
         #ax[0, 1].imshow(np.flipud(np.nan_to_num(pred.temp[i])), vmin=0, vmax=1, cmap=temp_cmap())
         #ax[1, 1].imshow(np.flipud(pred.velx[i]), vmin=x_vmin, vmax=x_vmax, cmap='jet')
         #ax[2, 1].imshow(np.flipud(pred.vely[i]), vmin=y_vmin, vmax=x_vmax, cmap='jet')
-        ax[1, 1].imshow(np.flipud(pred_mag[i]), vmin=0, vmax=mag_vmax, cmap='jet')
-
-        ax[0, 0].axis('off')
-        ax[1, 0].axis('off')
-        ax[0, 1].axis('off')
-        ax[1, 1].axis('off')
+        ax[1].imshow(np.flipud(pred_mag[i]), vmin=0, vmax=mag_vmax, cmap='jet')
+        ax[0].set_title(f'Label Magnitude\n', fontdict={'fontsize': 14, 'fontweight': 'bold'})
+        ax[1].set_title(f'Predicted Magnitude\n', fontdict={'fontsize': 14, 'fontweight': 'bold'})
+        ax[0].axis('off')
+        ax[1].axis('off')
+        # ax[0, 1].axis('off')
+        # ax[1, 1].axis('off')
 
         #ax[0, 2].imshow(np.flipud(fft(label.temp[i])))
         #ax[1, 2].imshow(np.flipud(fft(label.velx[i])))

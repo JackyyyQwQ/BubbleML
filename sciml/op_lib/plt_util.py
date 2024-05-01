@@ -79,7 +79,8 @@ def plt_temp(temps, labels, model_name):
 
 def plt_vel(vel_preds, vel_labels,
             velx_preds, velx_labels,
-            vely_preds, vely_labels,
+            vely_preds, vely_labels, 
+            dfun_preds, dfun_labels,
             model_name):
 
     #vel_preds = (vel_preds + 1) / 2
@@ -132,3 +133,6 @@ def plt_vel(vel_preds, vel_labels,
     torch.save(velx_labels, f'{im_path}/velx_label.pt')
     torch.save(vely_preds, f'{im_path}/vely_output.pt')
     torch.save(vely_labels, f'{im_path}/vely_label.pt')
+    torch.save(dfun_preds, f'{im_path}/dfun_output.pt')
+    torch.save(dfun_labels, f'{im_path}/dfun_label.pt')
+    

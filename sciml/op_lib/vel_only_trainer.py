@@ -164,7 +164,8 @@ class VelOnlyTrainer:
 
             idx = (push_forward_steps - 1)
             vel_label = vel_label[:, idx].to(local_rank()).float()
-          #  print("Shape1 of vel_label:", vel_label.shape)
+            # print("Shape1 of vel_label:", vel_label.shape)
+            # print("Shape1 of vel_pred:", vel_pred.shape)
             vel_label = downsample_domain(self.cfg.train.downsample_factor, vel_label)[0]
            
 
